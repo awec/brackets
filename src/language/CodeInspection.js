@@ -308,7 +308,7 @@ define(function (require, exports, module) {
      * @param {Array.<{name:string, scanFileAsync:?function(string, string):!{$.Promise}, scanFile:?function(string, string):Object}>} providersReportingProblems - providers that reported problems
      * @param {boolean} aborted - true if any provider returned a result with the 'aborted' flag set
      */
-    function updatePanelTitleAndStatusBar(numProblems, providersReportingProblems, aborted) {
+    function updatePanelTitleAndStatusBar(numProblems, providersReportingProblems, hasError, aborted) {
         var message, tooltip;
 
         if (providersReportingProblems.length === 1) {
@@ -338,7 +338,7 @@ define(function (require, exports, module) {
 
         $problemsPanel.find(".title").text(message);
         tooltip = StringUtils.format(Strings.STATUSBAR_CODE_INSPECTION_TOOLTIP, message);
-        StatusBar.updateIndicator(INDICATOR_ID, true, "inspection-errors", tooltip);
+        StatusBar.updateIndicator(INDICATOR_ID, true, hasError ? "inspection-errors" : "inspection-warnings", tooltip);
     }
 
     /**
@@ -396,6 +396,8 @@ define(function (require, exports, module) {
 
                 var perfTimerDOM = PerfUtils.markStart("ProblemsPanel render:\t" + currentDoc.file.fullPath);
                 
+                var hasError = false;
+                
                 // Augment error objects with additional fields needed by Mustache template
                 results.forEach(function (inspectionResult) {
                     var provider = inspectionResult.provider;
@@ -413,6 +415,8 @@ define(function (require, exports, module) {
                             if (error.type !== Type.META) {
                                 numProblems++;
                             }
+                            
+                            hasError = hasError || error.type === Type.ERROR;
                         });
 
                         // if the code inspector was unable to process the whole file, we keep track to show a different status
@@ -443,7 +447,7 @@ define(function (require, exports, module) {
                     Resizer.show($problemsPanel);
                 }
 
-                updatePanelTitleAndStatusBar(numProblems, providersReportingProblems, aborted);
+                updatePanelTitleAndStatusBar(numProblems, providersReportingProblems, hasError, aborted);
                 setGotoEnabled(true);
 
                 PerfUtils.addMeasurement(perfTimerDOM);
