@@ -46,7 +46,7 @@ define(function (require, exports, module) {
      * @param {boolean} insertHintOnTab Whether pressing tab inserts the selected hint
      * @param {number} maxResults Maximum hints displayed at once. Defaults to 50
      */
-    function CodeHintList(editor, insertHintOnTab, maxResults) {
+    function CodeHintList(editor, insertHintOnTab, insertHintOnKeyCodes, maxResults) {
 
         /**
          * The list of hints to display
@@ -89,6 +89,13 @@ define(function (require, exports, module) {
          * @type {boolean}
          */
         this.insertHintOnTab = insertHintOnTab;
+
+        /**
+         * Whether the currently selected hint should be inserted on a tab key event
+         *
+         * @type {boolean}
+         */
+        this.insertHintOnKeyCodes = insertHintOnKeyCodes;
 
         /**
          * Pending text insertion
@@ -314,7 +321,8 @@ define(function (require, exports, module) {
         return (keyCode === KeyEvent.DOM_VK_UP || keyCode === KeyEvent.DOM_VK_DOWN ||
                 keyCode === KeyEvent.DOM_VK_PAGE_UP || keyCode === KeyEvent.DOM_VK_PAGE_DOWN ||
                 keyCode === KeyEvent.DOM_VK_RETURN ||
-                (keyCode === KeyEvent.DOM_VK_TAB && this.insertHintOnTab));
+                (keyCode === KeyEvent.DOM_VK_TAB && this.insertHintOnTab) ||
+                (this.insertHintOnKeyCodes.indexOf(keyCode) !== -1 ));
     };
 
     /**
@@ -430,6 +438,12 @@ define(function (require, exports, module) {
                 
                 // Trigger a click handler to commmit the selected item
                 $(this.$hintMenu.find("li")[this.selectedIndex]).trigger("click");
+            } else if (this.insertHintOnKeyCodes.indexOf(keyCode) !== -1) {
+                if (!this.pendingText) {
+                    $(this.$hintMenu.find("li")[this.selectedIndex]).trigger("click");
+                }
+
+                return false;   
             } else {
                 // Let the event bubble.
                 return false;

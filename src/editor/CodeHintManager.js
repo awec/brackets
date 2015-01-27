@@ -486,6 +486,7 @@ define(function (require, exports, module) {
         // If a provider is found, initialize the hint list and update it
         if (sessionProvider) {
             var insertHintOnTab,
+                insertHintOnOther = [],
                 maxCodeHints = PreferencesManager.get("maxCodeHints");
             if (sessionProvider.insertHintOnTab !== undefined) {
                 insertHintOnTab = sessionProvider.insertHintOnTab;
@@ -493,9 +494,13 @@ define(function (require, exports, module) {
                 insertHintOnTab = PreferencesManager.get("insertHintOnTab");
             }
 
+            if (sessionProvider.insertHintOnOther) {
+                insertHintOnOther = _getValidInsertHintOnOtherKeyCodes(sessionProvider.insertHintOnOther);
+            }
+
             sessionEditor = editor;
 
-            hintList = new CodeHintList(sessionEditor, insertHintOnTab, maxCodeHints);
+            hintList = new CodeHintList(sessionEditor, insertHintOnTab, insertHintOnOther, maxCodeHints);
             hintList.onSelect(function (hint) {
                 var restart = sessionProvider.insertHint(hint),
                     previousEditor = sessionEditor;
@@ -511,6 +516,18 @@ define(function (require, exports, module) {
             lastChar = null;
         }
     };
+
+     function _getValidInsertHintOnOtherKeyCodes(keyCodes) {
+        var validKeyCodes = [];
+
+        keyCodes.forEach(function (keyCode) {
+            if (!isNaN(parseFloat(keyCode)) && isFinite(keyCode)) {
+                validKeyCodes.push(parseInt(keyCode));
+            }
+        });
+
+        return validKeyCodes;
+     };
 
     /**
      * Explicitly start a new session. If we have an existing session,
